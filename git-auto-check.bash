@@ -6,7 +6,7 @@ set -o pipefail
 shopt -s nullglob
 shopt -s inherit_errexit
 
-command_delimiter='--git-auto-sync-end-of-check-command--'
+command_delimiter='--git-auto-check-end-of-check-command--'
 
 function main {
 	if [[ ${GIT_AUTO_CHECK_DEBUG:-} == 'true' ]]; then
