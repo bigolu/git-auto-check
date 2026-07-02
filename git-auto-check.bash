@@ -9,6 +9,10 @@ shopt -s inherit_errexit
 command_delimiter='--git-auto-sync-end-of-check-command--'
 
 function main {
+	if [[ ${GIT_AUTO_CHECK_DEBUG:-} == 'true' ]]; then
+		set -o xtrace
+	fi
+
 	if [[ $1 == 'install' ]]; then
 		git config hook.auto-check.event 'pre-push'
 		shift
