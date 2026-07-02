@@ -62,7 +62,7 @@ function main {
 	done
 
 	# Stop the sequence editor from launching by setting it to a no-op.
-	git -c sequence.editor=: rebase --interactive --exec "${check_command[@]@Q}" "$merge_base"
+	git -c sequence.editor=: rebase --interactive --exec "${check_command[*]@Q}" "$merge_base"
 }
 
 main "$@"
