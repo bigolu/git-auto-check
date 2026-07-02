@@ -9,6 +9,7 @@ shopt -s inherit_errexit
 function main {
 	if [[ $1 == 'install' ]]; then
 		git config hook.auto-check.event 'pre-push'
+		shift
 		git config hook.auto-check.command "git-auto-check ${*@Q}"
 		exit
 	fi
