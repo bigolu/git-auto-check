@@ -6,11 +6,13 @@ set -o pipefail
 shopt -s nullglob
 shopt -s inherit_errexit
 
+command_delimiter='--git-auto-sync-end-of-check-command--'
+
 function main {
 	if [[ $1 == 'install' ]]; then
 		git config hook.auto-check.event 'pre-push'
 		shift
-		git config hook.auto-check.command "git-auto-check ${*@Q}"
+		git config hook.auto-check.command "git-auto-check ${*@Q} $command_delimiter"
 		exit
 	fi
 
@@ -45,8 +47,18 @@ function main {
 		exit
 	fi
 
+	local -a check_command=()
+	local arg
+	for arg in "$@"; do
+		if [[ $arg == "$command_delimiter" ]]; then
+			break
+		else
+			check_command+=("$arg")
+		fi
+	done
+
 	# Stop the sequence editor from launching by setting it to a no-op.
-	git -c sequence.editor=: rebase --interactive --exec "${*@Q}" "$merge_base"
+	git -c sequence.editor=: rebase --interactive --exec "${check_command[@]@Q}" "$merge_base"
 }
 
 main "$@"
