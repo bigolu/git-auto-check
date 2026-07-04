@@ -18,8 +18,6 @@ function main {
 		exit
 	fi
 
-	echo '[git-auto-check] Checking commits...'
-
 	local ref_updates
 	readarray -t ref_updates
 	if (( ${#ref_updates[@]} != 1 )); then
@@ -50,6 +48,7 @@ function main {
 	fi
 
 	local -a check_command=("${@:2:$1}")
+	echo '[git-auto-check] Checking commits...'
 	# Stop the sequence editor from launching by setting it to a no-op.
 	git -c sequence.editor=: rebase --interactive --exec "${check_command[*]@Q}" "$merge_base"
 }
