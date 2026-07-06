@@ -32,6 +32,7 @@ function main {
 	fi
 
 	# All zeros means we are creating a new ref.
+	local merge_base=''
 	if [[ $remote_sha =~ ^0+$ ]]; then
 		local -a remote_branch_shas
 		readarray -t remote_branch_shas <<<"$(git rev-parse --remotes)"
@@ -47,10 +48,16 @@ function main {
 		exit
 	fi
 
-	local -a check_command=("${@:2:$1}")
 	echo '[git-auto-check] Checking commits...'
-	# Stop the sequence editor from launching by setting it to a no-op.
-	git -c sequence.editor=: rebase --interactive --exec "${check_command[*]@Q}" "$merge_base"
+	local -a check_command=("${@:2:$1}")
+	local commit_count
+	commit_count="$(git rev-list --count "$merge_base".."$local_sha")"
+	if ((commit_count == 1)); then
+		"${check_command[*]@Q}"
+	else
+		# Stop the sequence editor from launching by setting it to a no-op.
+		git -c sequence.editor=: rebase --interactive --exec "${check_command[*]@Q}" "$merge_base"
+	fi
 }
 
 main "$@"
