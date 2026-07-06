@@ -25,5 +25,8 @@ resholve.mkDerivation {
     execer = [
       "cannot:${getExe pkgs.git}"
     ];
+    keep = {
+      "$check_command" = true;
+    };
   };
 }

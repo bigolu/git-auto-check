@@ -48,12 +48,12 @@ function main {
 		exit
 	fi
 
-	echo '[git-auto-check] Checking commits...'
 	local -a check_command=("${@:2:$1}")
 	local commit_count
 	commit_count="$(git rev-list --count "$merge_base".."$local_sha")"
+	echo '[git-auto-check] Checking commits...'
 	if ((commit_count == 1)); then
-		"${check_command[*]@Q}"
+		"${check_command[@]}"
 	else
 		# Stop the sequence editor from launching by setting it to a no-op.
 		git -c sequence.editor=: rebase --interactive --exec "${check_command[*]@Q}" "$merge_base"
