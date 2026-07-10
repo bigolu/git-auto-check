@@ -76,6 +76,13 @@ function main {
 	commit_count="$(git rev-list --count "$merge_base".."$local_sha")"
 	log 'Checking commits...'
 	if ((commit_count == 1)); then
+		local is_cached
+		is_cached="$(cache_has "${check_command[@]}")"
+		if [[ $is_cached == 'true' ]]; then
+			log "Command \`${check_command[*]}\` has already passed for this commit, skipping. You can clear the cache with \`git-auto-sync cache clear\`"
+			exit
+		fi
+
 		if "${check_command[@]}"; then
 			cache_add "${check_command[@]}"
 		else
