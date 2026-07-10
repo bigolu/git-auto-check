@@ -97,10 +97,11 @@ function set_command {
 	local command_filename
 	command_filename="$(get_command_as_filename "$@")"
 
-	local git_directory
-	git_directory="$(git rev-parse --absolute-git-dir)"
+	local directory
+	directory="$(git rev-parse --absolute-git-dir)/git-auto-check"
 
-	echo "$command_filename" >"$git_directory/git-auto-check/command.txt"
+	mkdir --parents "$directory"
+	echo "$command_filename" >"$directory/command.txt"
 }
 
 function cache_get_path {
