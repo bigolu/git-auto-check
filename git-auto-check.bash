@@ -28,7 +28,7 @@ function main {
 			local is_cached
 			is_cached="$(cache_has "$@")"
 			if [[ $is_cached == 'true' ]]; then
-				log "Command \`$*\` has already passed for this commit, skipping."
+				log "Command \`$*\` has already passed for this commit, skipping. You can clear the cache with \`git-auto-sync cache clear\`"
 				exit
 			fi
 
