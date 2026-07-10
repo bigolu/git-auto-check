@@ -63,7 +63,9 @@ function main {
 		exit
 	fi
 
-	if cache_has "${check_command[@]}"; then
+	local is_cached
+	is_cached="$(cache_has "${check_command[@]}")"
+	if [[ $is_cached == 'true' ]]; then
 		log "\`${check_command[*]}\` already passed for this commit, skipping."
 		exit
 	fi
@@ -144,7 +146,11 @@ function cache_has {
 	local commit
 	commit="$(git rev-parse 'HEAD')"
 
-	[[ -e $cache/$command_filename/$commit ]]
+	if [[ -e $cache/$command_filename/$commit ]]; then
+		echo 'true'
+	else
+		echo 'false'
+	fi
 }
 
 function get_command_as_filename {
