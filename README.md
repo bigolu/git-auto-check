@@ -56,3 +56,10 @@ git-auto-check install <check_command>...
 Where `check_command` is the command that does the checking.
 
 Example: `git-auto-check install cargo test`
+
+### Caching
+
+Clear the cache with `git-auto-check cache clear`.
+
+During an interactive rebase you can manually add a cache entry with `git-auto-check cache add`.
+

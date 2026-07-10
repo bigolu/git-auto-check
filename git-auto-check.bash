@@ -11,12 +11,27 @@ function main {
 		set -o xtrace
 	fi
 
-	if [[ $1 == 'install' ]]; then
-		git config hook.auto-check.event 'pre-push'
-		shift
-		git config hook.auto-check.command "git-auto-check $# ${*@Q}"
-		exit
-	fi
+	case "$1" in
+		'install')
+			git config hook.auto-check.event 'pre-push'
+			shift
+			git config hook.auto-check.command "git-auto-check $# ${*@Q}"
+			exit
+			;;
+		'cache')
+			"$1_$2"
+			exit
+			;;
+		'in-rebase')
+			shift
+			if "$@"; then
+				cache_add "$@"
+			else
+				log "Command failed, run \`git-auto-check cache add\` to mark the check as passed."
+				exit 1
+			fi
+			;;
+	esac
 
 	local ref_updates
 	readarray -t ref_updates
@@ -48,16 +63,98 @@ function main {
 		exit
 	fi
 
+	if cache_has "${check_command[@]}"; then
+		log "\`${check_command[*]}\` already passed for this commit, skipping."
+		exit
+	fi
+
 	local -a check_command=("${@:2:$1}")
 	local commit_count
 	commit_count="$(git rev-list --count "$merge_base".."$local_sha")"
-	echo '[git-auto-check] Checking commits...'
+	log 'Checking commits...'
 	if ((commit_count == 1)); then
-		"${check_command[@]}"
+		if "${check_command[@]}"; then
+			cache_add "${check_command[@]}"
+		else
+			exit 1
+		fi
 	else
+		set_command "${check_command[@]}"
 		# Stop the sequence editor from launching by setting it to a no-op.
-		git -c sequence.editor=: rebase --interactive --exec "${check_command[*]@Q}" "$merge_base"
+		git -c sequence.editor=: rebase --interactive --exec "git-auto-check in-rebase ${check_command[*]@Q}" "$merge_base"
 	fi
+}
+
+function get_command {
+	local git_directory
+	git_directory="$(git rev-parse --absolute-git-dir)"
+	echo "$(<"$git_directory/git-auto-check/command.txt")"
+}
+
+function set_command {
+	local command_filename
+	command_filename="$(get_command_as_filename "$@")"
+
+	local git_directory
+	git_directory="$(git rev-parse --absolute-git-dir)"
+
+	echo "$command_filename" >"$git_directory/git-auto-check/command.txt"
+}
+
+function cache_get_path {
+	local git_directory
+	git_directory="$(git rev-parse --absolute-git-dir)"
+	echo "$git_directory/git-auto-check/cache"
+}
+
+function cache_clear {
+	local cache
+	cache="$(cache_get_path)"
+	rm -rf "$cache"
+}
+
+function cache_add {
+	if (($# == 0)); then
+		local command_filename
+		command_filename="$(get_command)"
+	else
+		local command_filename
+		command_filename="$(get_command_as_filename "$@")"
+	fi
+
+	local commit
+	commit="$(git rev-parse 'HEAD')"
+
+	local cache
+	cache="$(cache_get_path)"
+
+	local command_cache="$cache/${command_filename}"
+
+	mkdir --parents "$command_cache"
+	touch "$command_cache/$commit"
+}
+
+function cache_has {
+	local command_filename
+	command_filename="$(get_command_as_filename "$@")"
+
+	local cache
+	cache="$(cache_get_path)"
+
+	local commit
+	commit="$(git rev-parse 'HEAD')"
+
+	[[ -e $cache/$command_filename/$commit ]]
+}
+
+function get_command_as_filename {
+	local -a command=("$@")
+	local filename="${command[*]@Q}"
+	echo "${filename//\//-}"
+}
+
+function log {
+	echo "[git-auto-check] $1" >&2
 }
 
 main "$@"

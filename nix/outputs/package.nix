@@ -6,6 +6,7 @@ let
   pname = "git-auto-check";
   dependencies = with pkgs; [
     git
+    coreutils
   ];
 in
 resholve.mkDerivation {
