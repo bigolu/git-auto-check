@@ -63,6 +63,8 @@ function main {
 		exit
 	fi
 
+	local -a check_command=("${@:2:$1}")
+
 	local is_cached
 	is_cached="$(cache_has "${check_command[@]}")"
 	if [[ $is_cached == 'true' ]]; then
@@ -70,7 +72,6 @@ function main {
 		exit
 	fi
 
-	local -a check_command=("${@:2:$1}")
 	local commit_count
 	commit_count="$(git rev-list --count "$merge_base".."$local_sha")"
 	log 'Checking commits...'
