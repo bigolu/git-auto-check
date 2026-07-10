@@ -24,6 +24,14 @@ function main {
 			;;
 		'in-rebase')
 			shift
+
+			local is_cached
+			is_cached="$(cache_has "$@")"
+			if [[ $is_cached == 'true' ]]; then
+				log "Command \`$*\` has already passed for this commit, skipping."
+				exit
+			fi
+
 			if "$@"; then
 				cache_add "$@"
 			else
@@ -64,14 +72,6 @@ function main {
 	fi
 
 	local -a check_command=("${@:2:$1}")
-
-	local is_cached
-	is_cached="$(cache_has "${check_command[@]}")"
-	if [[ $is_cached == 'true' ]]; then
-		log "\`${check_command[*]}\` already passed for this commit, skipping."
-		exit
-	fi
-
 	local commit_count
 	commit_count="$(git rev-list --count "$merge_base".."$local_sha")"
 	log 'Checking commits...'
