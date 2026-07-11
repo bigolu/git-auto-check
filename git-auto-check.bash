@@ -24,20 +24,7 @@ function main {
 			;;
 		'in-rebase')
 			shift
-
-			local is_cached
-			is_cached="$(cache_has "$@")"
-			if [[ $is_cached == 'true' ]]; then
-				log "Command \`$*\` has already passed for this commit, skipping. You can clear the cache with \`git-auto-sync cache clear\`"
-				exit
-			fi
-
-			if "$@"; then
-				cache_add "$@"
-			else
-				log "Command failed, run \`git-auto-check cache add\` to mark the check as passed."
-				exit 1
-			fi
+			run_command_and_exit "$@"
 			;;
 	esac
 
@@ -72,26 +59,32 @@ function main {
 	fi
 
 	local -a check_command=("${@:2:$1}")
+	set_command "${check_command[@]}"
 	local commit_count
 	commit_count="$(git rev-list --count "$merge_base".."$local_sha")"
 	log 'Checking commits...'
 	if ((commit_count == 1)); then
-		local is_cached
-		is_cached="$(cache_has "${check_command[@]}")"
-		if [[ $is_cached == 'true' ]]; then
-			log "Command \`${check_command[*]}\` has already passed for this commit, skipping. You can clear the cache with \`git-auto-sync cache clear\`"
-			exit
-		fi
-
-		if "${check_command[@]}"; then
-			cache_add "${check_command[@]}"
-		else
-			exit 1
-		fi
+		run_command_and_exit "${check_command[@]}"
 	else
-		set_command "${check_command[@]}"
 		# Stop the sequence editor from launching by setting it to a no-op.
 		git -c sequence.editor=: rebase --interactive --exec "git-auto-check in-rebase ${check_command[*]@Q}" "$merge_base"
+	fi
+}
+
+function run_command_and_exit {
+	local is_cached
+	is_cached="$(cache_has "$@")"
+
+	if [[ $is_cached == 'true' ]]; then
+		log "Command \`$*\` has already passed for this commit, skipping. You can clear the cache with \`git-auto-sync cache clear\`."
+		exit
+	elif "$@"; then
+		cache_add "$@"
+		exit
+	else
+		# shellcheck disable=2016
+		log 'Command failed, run `git-auto-check cache add` to mark the check as passed.'
+		exit 1
 	fi
 }
 
